@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
+"""
+    getColor covers a discrete temperature into numerical value for plotting
+"""
 def getColor(tempVal):
 
     tempConversion = {
@@ -18,11 +21,20 @@ def getColor(tempVal):
     #Defaults to 0
     return tempConversion.get(tempVal, 0)
 
+"""
+    getImage gets the arrow direction formated for a plot from a filepath
 
+    path: image file path
+"""
 def getImage(path):
     return OffsetImage(plt.imread(path))
 
+"""
+    getDirection finds the nearest direction from u,v values
 
+    u: horizontal direction
+    v: vertical direction
+"""
 def getDirection(u,v):
     directionConversion = {
         (1,0): "E",
@@ -45,9 +57,15 @@ def getDirection(u,v):
 
     return directionConversion.get((u,v),"E")
 
+"""
+    plotAll plots the data with temperature, location, and wind direction indicated in the plot
+
+    nodes: list of wind data nodes
+    width: width of data matrix
+    height: height of data matrix (should equal width)
+"""
 def plotAll(nodes, width, height):
 
-    #temp plot
     fullList = np.zeros((height, width))
 
     xList = []
@@ -70,13 +88,8 @@ def plotAll(nodes, width, height):
     cbar = ax.figure.colorbar(im, ax=ax)
     cbar.ax.set_ylabel("Wind Temps", rotation=-90, va="bottom")
 
-    #arrow plot
-
-
-    # fig, ax = plt.subplots()
     ax.scatter(xList, yList, s=0.1)
 
-    # for x0, y0, path in zip(x, y, paths):
     for x0, y0, path in vals:
         ab = AnnotationBbox(getImage(path), (x0, y0), frameon=False)
         ax.add_artist(ab)

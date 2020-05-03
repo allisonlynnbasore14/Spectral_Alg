@@ -91,11 +91,16 @@ def make_wind_data(windDataFile):
 
 """
     Returns the eigenvalues of given matrix M
+
+    M must be a square matrix
 """
 def find_eigens(M):
     vals, vecs = np.linalg.eig(M)
     return vals, vecs
 
+"""
+    makeXVals finds the x,y tuples for position from a list of wind nodes
+"""
 def makeXVals(wS):
     m = []
     max = wS.width
@@ -104,6 +109,12 @@ def makeXVals(wS):
 
     return m
 
+"""
+    getTempConvDict coverts the discrete temp values into a tuple look up dictionary
+
+    With the result, look up a combination of two temp values to see their diff
+    ex: tempLookUp[(C1,C2)] = 0.01
+"""
 def getTempConvDict():
     tempConversion = {
         "C1": 0,
@@ -129,12 +140,26 @@ def getTempConvDict():
     return tempLookUp
 
 
+"""
+    findAbsPos coverts x,y position tuple into position in simple list of wind nodes
+
+    xY: position tuple
+    size: width of data matrix
+"""
 def findAbsPos(xY, size):
     x,y = xY
     val = y*size + x
     return val
 
+"""
+    make_weights_matrix finds the weights between each node based on temp
+    (possible extensions would be to base the weights on position or direction)
+
+    wSystem: a windSystem object
+"""
 def make_weights_matrix(wSystem, type=0):
+
+    #Creating empty matrices
     connMatrix = np.zeros((len(wSystem.windNodes), len(wSystem.windNodes)))
     weightMatrix = np.zeros((len(wSystem.windNodes), len(wSystem.windNodes)))
 
@@ -149,6 +174,7 @@ def make_weights_matrix(wSystem, type=0):
         right = findAbsPos((node.x+1, node.y), wSystem.width)
         left = findAbsPos((node.x-1, node.y), wSystem.width)
 
+        #Connects nodes that are above, below, right or left of the current node
         if(up >=min and up<max):
             connMatrix[(curr, up)] = 1
 
@@ -162,29 +188,28 @@ def make_weights_matrix(wSystem, type=0):
             connMatrix[(curr, left)] = 1
 
     heatDiff = getTempConvDict()
-    if(type == 0):
 
+    if(type == 0):
         for node1 in wSystem.windNodes:
             pos1 = findAbsPos((node1.x, node1.y), wSystem.width)
             for node2 in wSystem.windNodes:
                 pos2 = findAbsPos((node2.x, node2.y), wSystem.width)
                 if(connMatrix[(pos1,pos2)]):
-                    #They are connected
-                    val = heatDiff[(node1.temp,node2.temp)]
-                    weightMatrix[(pos1, pos2)] = val
-                # else:
-                #     weightMatrix[(pos1, pos2)] = 1
-        print("Making Location with Temp Weighted Graph")
+                    val = heatDiff[(node1.temp,node2.temp)] # They are connected
+                    weightMatrix[(pos1, pos2)] = val #Add to the weight matrix
+
+        print("Making Weights with Temp Weighted Graph")
     if(type == 1):
-        #Todo: finish
+        #Not yet testing functional
         for node1 in wSystem.windNodes:
             for node2 in wSystem.windNodes:
                 uDiff = (node1.u-node2.u)**2
                 vDiff = (node1.v-node2.v)**2
                 totalDiff = math.sqrt(uDiff + vDiff)
                 corr = 2 - totalDiff
-        print("Making Direction Graph")
+        print("Making Weights with Direction Graph")
     if(type == 2):
+        #Not yet testing functional
         for node1 in wSystem.windNodes:
             pos1 = findAbsPos((node1.x, node1.y), wSystem.width)
             for node2 in wSystem.windNodes:
@@ -192,28 +217,40 @@ def make_weights_matrix(wSystem, type=0):
                 val = heatDiff[(node1.temp,node2.temp)]
                 weightMatrix[(pos1, pos2)] = val
 
-        print("Making Temp Graph")
-
+        print("Making Weights with Temp Graph")
 
     return weightMatrix
 
+
+"""
+    make_laplacian makes the Laplacian Matrix from the degree (D) and weights (W) matrices
+
+    W: weights matrix of wind data
+"""
 def make_laplacian( W ):
     D = np.diag(W.sum(axis=1))
     L = D-W
     print("Making Laplacian")
     return L
 
-def k_means(A, vals, vecs):
-    return KMeans(n_clusters=3, random_state=0).fit(vecs)
+"""
+    graph_solution makes a plot of the results of clustering, breaks up
+    eigenvector into 2 or 3 clusters
 
+    X: position values of wind data
+    eigvec: calcauted eigenvectors
+    clusters: number of expected clusters
+    dot_size: dot size of the plot data points
+"""
 def graph_solution(X, eigvec, clusters,dot_size=130):
     y_spec =eigvec[:,1].copy()
     print(y_spec)
     if(clusters == 2):
         y_spec[y_spec < 0] = 0
         y_spec[y_spec > 0] = 1
-    if(clusters == 3):
 
+
+    if(clusters == 3):
         index = 0
         for x in y_spec:
             if(x >0.09):
@@ -225,6 +262,7 @@ def graph_solution(X, eigvec, clusters,dot_size=130):
             index+=1
     print(y_spec)
 
+    #Seperates the tuples in X
     x = [i[0] for i in X]
     y = [i[1] for i in X]
     fig, ax = plt.subplots(figsize=(7,7))
@@ -232,6 +270,13 @@ def graph_solution(X, eigvec, clusters,dot_size=130):
     ax.scatter(x, y,c=y_spec ,s=dot_size, cmap='spring')
     print("Graphing Solution")
 
+"""
+    graph_kmeans plots the k means solution to the data
+
+    X: position values of wind data
+    clusters: number of expected clusters
+    dot_size: dot size of the plot data points
+"""
 def graph_kmeans(X, clusters, dot_size=130):
     km = KMeans(init='k-means++', n_clusters=clusters)
     km_clustering = km.fit(X)
@@ -241,6 +286,13 @@ def graph_kmeans(X, clusters, dot_size=130):
     ax.set_title('KMeans Results', fontsize=18, fontweight='demi')
     plt.scatter(x, y, c=km_clustering.labels_,  s=dot_size, cmap='rainbow', alpha=0.7)
 
+"""
+    graph_skLearn plots teh sklearn's library version of the solution to the data
+
+    X: position values of wind data
+    clusters: number of expected clusters
+    dot_size: dot size of the plot data points
+"""
 def graph_skLearn(X, clusters, dot_size=130):
     sc = SpectralClustering(n_clusters=clusters, affinity='nearest_neighbors', random_state=0)
     sc_clustering = sc.fit(X)
@@ -251,20 +303,17 @@ def graph_skLearn(X, clusters, dot_size=130):
     plt.scatter(x, y, c=sc_clustering.labels_, cmap='rainbow', alpha=0.7, s=dot_size)
 
 if __name__ == '__main__':
-    windDataFile = sys.argv[1]
-    AA = np.array([[1,2,3],[1,2,2])
-    print(AA)
-    find_eigens(AA)
-    wSystem = make_wind_data(windDataFile)
-    xVals= makeXVals(wSystem)
-    W = make_weights_matrix(wSystem, type=2)
-    L = make_laplacian(W)
-    vals, vecs = find_eigens(L)
-    vecs = vecs[:,np.argsort(vals)]
-    vals = vals[np.argsort(vals)]
+    windDataFile = sys.argv[1] #Read user file input
+    wSystem = make_wind_data(windDataFile) #Make overall windsystem from data
+    xVals= makeXVals(wSystem) #Put the data into x,y position values
+    W = make_weights_matrix(wSystem, type=2) #Make weights/connection matrix
+    L = make_laplacian(W) #Make Laplacian Matrix
+    vals, vecs = find_eigens(L) #Find eigenstuff from Laplacian
+    vecs = vecs[:,np.argsort(vals)] #Sort the eigenvectors by the eigenvalues size
+    vals = vals[np.argsort(vals)] #Sort the eigenvales by the eigenvalues size
     clusters = wSystem.c
-    graph_solution(xVals, vecs, clusters)
-    graph_kmeans(xVals, clusters)
-    graph_skLearn(xVals, clusters)
+    graph_solution(xVals, vecs, clusters) #Graph our solution
+    graph_kmeans(xVals, clusters) #Graph k_means solution
+    graph_skLearn(xVals, clusters) #Graph sk_learn's solution
     plt.show()
     print("Completed")
