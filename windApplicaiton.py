@@ -6,6 +6,12 @@ import math
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from sklearn.cluster import SpectralClustering, KMeans
 
+"""
+    windSystem class keeps track of the wind nodes and meta data of the system
+
+    plotSystem: calls an external file function to plot the data with temperature,
+    location, and wind direction indicated in the plot
+"""
 class windSystem:
     def __init__(self, name, width, height, c=2):
         self.windNodes = []
@@ -16,9 +22,20 @@ class windSystem:
 
     def plotSystem(self):
         plotAll(self.windNodes, self.width, self.height)
-        print("Graph")
+        print("Printing Graph of System")
 
 
+"""
+    windNode class makes a single wind data point, represents a single weather
+    station's weather readings
+
+    A wind node needs the following parameters specified:
+    u = lat position ex: -1 (Straight West)
+    v = long position ex: 1 (Straight North)
+    x = horizontal position in system
+    y = vertical position in system
+    temp = discrete temp value ex: C1 (coldest relative temp)
+"""
 class windNode:
     def __init__(self, u, v, t, x, y):
         self.u = u
@@ -28,16 +45,26 @@ class windNode:
         self.temp = t
 
 
+"""
+    make_wind_data reads the data text file and creates teh windNodes to populate
+    the windSystem.
+
+    windDataFile: name of .txt file to read data from, file must be in particular
+    format (see data folder)
+"""
 def make_wind_data(windDataFile):
 
+    #Opening and storing lines of data .txt file
     f = open(windDataFile, "r")
     lines = [line.split() for line in f.readlines()]
     f.close()
 
+    #Extracting meta data, width and height must be equal
     width = int(lines[0][0])
     height = int(lines[0][1])
-    c = int(lines[1][0])
+    c = int(lines[1][0]) # Number of clusters
 
+    #Creating overall system
     wS = windSystem("USA", width, height, c=c)
 
     lines = lines[2:]
@@ -45,6 +72,7 @@ def make_wind_data(windDataFile):
     xVal = 0
     yVal = 0
 
+    #Making wind nodes
     for line in lines:
         if(line):
             tempVal = line[0]
@@ -56,11 +84,14 @@ def make_wind_data(windDataFile):
                 xVal=0
                 yVal+=1
 
+    #Makes plot of whole system including arrows for wind direction, color for temp, and (x,y) location
     wS.plotSystem()
 
     return wS
 
-
+"""
+    Returns the eigenvalues of given matrix M
+"""
 def find_eigens(M):
     vals, vecs = np.linalg.eig(M)
     return vals, vecs
@@ -221,7 +252,9 @@ def graph_skLearn(X, clusters, dot_size=130):
 
 if __name__ == '__main__':
     windDataFile = sys.argv[1]
-
+    AA = np.array([[1,2,3],[1,2,2])
+    print(AA)
+    find_eigens(AA)
     wSystem = make_wind_data(windDataFile)
     xVals= makeXVals(wSystem)
     W = make_weights_matrix(wSystem, type=2)
