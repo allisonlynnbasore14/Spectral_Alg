@@ -20,3 +20,11 @@ python windApplicaiton.py "data/windData1.txt"
 ```
 
 You can substitute any data file in for windData1.txt. All data files are included in the /data folder.
+
+## Results
+Below are a few plots from the application. The first image is the actual data plotted with temperature designated by color, direction by arrow direction, and location by x,y coordinate. The second image is this implementation's clustering. The colors represent different clusters.
+
+![Plotted Wind Data](https://github.com/allisonlynnbasore14/resultsImages/originalData.png "Plotted Wind Data")
+
+![Results of Spectral Clustering Implementation](https://github.com/allisonlynnbasore14/resultsImages/resultData.png "Results of Spectral Clustering Implementation")
+
