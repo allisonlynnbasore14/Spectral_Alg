@@ -10,13 +10,13 @@ The United States has very interesting wind patterns. In a very simplistic model
 ## Run Instructions (Python installed on your machine is required)
 In order to test this application yourself first run in your terminal:
 
-‘’’
+```
 git clone https://github.com/allisonlynnbasore14/Spectral_Alg.git
-‘’’
+```
 Next, navigate to the local version of the repo. Once in the repo run:
 
-‘’’
+```
 python windApplicaiton.py "data/windData1.txt"
-‘’’
+```
 
 You can substitute any data file in for windData1.txt. All data files are included in the /data folder.
